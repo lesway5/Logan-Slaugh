@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Mood Finder - Logan Slaugh</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #f0f0f0;
+        }
+
+        .topnav {
+            background-color: #1a1a2e;
+            padding: 15px 30px;
+            display: flex;
+            gap: 25px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .topnav a {
+            color: #f0f0f0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .topnav a:hover { color: #e94560; }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 50px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.8rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaaaaa;
+            margin-bottom: 50px;
+            font-size: 1.1rem;
+        }
+
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .mood-btn {
+            background-color: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 16px;
+            padding: 25px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #f0f0f0;
+        }
+
+        .mood-btn:hover {
+            border-color: #e94560;
+            transform: translateY(-3px);
+            background-color: #2a1a1e;
+        }
+
+        .mood-btn.selected {
+            border-color: #e94560;
+            background-color: #e94560;
+            color: white;
+        }
+
+        .mood-emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+        .mood-label { font-size: 0.95rem; font-weight: 600; }
+
+        .energy-section {
+            margin-bottom: 40px;
+        }
+
+        .energy-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #e94560;
+        }
+
+        .energy-slider {
+            width: 100%;
+            accent-color: #e94560;
+            height: 6px;
+            cursor: pointer;
+        }
+
+        .energy-labels {
+            display: flex;
+            justify-content: space-between;
+            color: #aaaaaa;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .generate-btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-bottom: 40px;
+        }
+
+        .generate-btn:hover {
+            background-color: #c73652;
+            transform: translateY(-2px);
+        }
+
+        .generate-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-card {
+            background-color: #1e1e1e;
+            border-radius: 16px;
+            padding: 35px;
+            border: 1px solid #333;
+            display: none;
+        }
+
+        .result-card.visible { display: block; }
+
+        .result-card h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 20px;
+            border-left: 4px solid #e94560;
+            padding-left: 12px;
+        }
+
+        .playlist-section { margin-bottom: 25px; }
+
+        .playlist-section h3 {
+            font-size: 1rem;
+            color: #aaaaaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .song-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .song-item {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid #e94560;
+        }
+
+        .song-num {
+            color: #e94560;
+            font-weight: 700;
+            font-size: 0.9rem;
+            min-width: 24px;
+        }
+
+        .song-info { flex: 1; }
+        .song-title { font-weight: 600; font-size: 0.95rem; }
+        .song-artist { color: #aaaaaa; font-size: 0.85rem; margin-top: 2px; }
+
+        .vibe-description {
+            background-color: #2a1a1e;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #e94560;
+            margin-bottom: 25px;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #dddddd;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loading.visible { display: block; }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top: 4px solid #e94560;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .try-again-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: transparent;
+            color: #e94560;
+            border: 2px solid #e94560;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .try-again-btn:hover {
+            background-color: #e94560;
+            color: white;
+        }
+
+        .error-msg {
+            background-color: #2a1010;
+            border: 1px solid #e94560;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #ff8888;
+            display: none;
+        }
+
+        .error-msg.visible { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href="index.html">← Professional Site</a>
+        <a href="scratch.html">← Music Page</a>
+    </div>
+
+    <div class="container">
+        <h1>🎵 Music Mood Finder</h1>
+        <p class="subtitle">Tell me how you're feeling and I'll build you the perfect playlist</p>
+
+        <!-- Mood Selection -->
+        <div class="mood-grid" id="moodGrid">
+            <div class="mood-btn" onclick="selectMood(this, 'Happy & Energetic')">
+                <span class="mood-emoji">😄</span>
+                <span class="mood-label">Happy</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'Sad & Emotional')">
+                <span class="mood-emoji">😢</span>
+                <span class="mood-label">Sad</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'Hype & Motivated')">
+                <span class="mood-emoji">🔥</span>
+                <span class="mood-label">Hype</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'Chill & Relaxed')">
+                <span class="mood-emoji">😌</span>
+                <span class="mood-label">Chill</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'Angry & Frustrated')">
+                <span class="mood-emoji">😤</span>
+                <span class="mood-label">Angry</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'Focused & Productive')">
+                <span class="mood-emoji">🎯</span>
+                <span class="mood-label">Focused</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'Romantic & Lovey')">
+                <span class="mood-emoji">❤️</span>
+                <span class="mood-label">Romantic</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'Nostalgic & Reflective')">
+                <span class="mood-emoji">🌙</span>
+                <span class="mood-label">Nostalgic</span>
+            </div>
+        </div>
+
+        <!-- Energy Slider -->
+        <div class="energy-section">
+            <h2>Energy Level</h2>
+            <input type="range" min="1" max="10" value="5" class="energy-slider" id="energySlider" oninput="updateEnergy(this.value)" />
+            <div class="energy-labels">
+                <span>Low Key 😴</span>
+                <span id="energyValue">5 / 10</span>
+                <span>Full Send 🚀</span>
+            </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button class="generate-btn" id="generateBtn" onclick="generatePlaylist()" disabled>
+            Select a Mood to Get Started
+        </button>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="color: #aaaaaa;">Building your perfect playlist...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error-msg" id="errorMsg">
+            Something went wrong. Please try again!
+        </div>
+
+        <!-- Result -->
+        <div class="result-card" id="resultCard">
+            <h2 id="resultTitle">Your Playlist</h2>
+            <div class="vibe-description" id="vibeDescription"></div>
+            <div class="playlist-section">
+                <h3>🎵 Songs for this Mood</h3>
+                <ul class="song-list" id="songList"></ul>
+            </div>
+            <button class="try-again-btn" onclick="resetApp()">Try a Different Mood</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedMood = '';
+
+        function selectMood(el, mood) {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedMood = mood;
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = false;
+            btn.textContent = `Build My ${mood.split(' ')[0]} Playlist 🎵`;
+        }
+
+        function updateEnergy(val) {
+            document.getElementById('energyValue').textContent = `${val} / 10`;
+        }
+
+        async function generatePlaylist() {
+            const energy = document.getElementById('energySlider').value;
+
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('loading').classList.add('visible');
+            document.getElementById('resultCard').classList.remove('visible');
+            document.getElementById('errorMsg').classList.remove('visible');
+
+            const prompt = `You are a music expert. The user is feeling "${selectedMood}" with an energy level of ${energy}/10.
+
+Give them a personalized playlist recommendation. Respond ONLY in this exact JSON format with no extra text:
+{
+  "title": "A creative playlist title",
+  "vibe": "2-3 sentences describing this mood and why these songs fit",
+  "songs": [
+    {"title": "Song Title", "artist": "Artist Name"},
+    {"title": "Song Title", "artist": "Artist Name"},
+    {"title": "Song Title", "artist": "Artist Name"},
+    {"title": "Song Title", "artist": "Artist Name"},
+    {"title": "Song Title", "artist": "Artist Name"},
+    {"title": "Song Title", "artist": "Artist Name"}
+  ]
+}
+
+Pick real, well-known songs that match the mood and energy level. Mix genres appropriately.`;
+
+            try {
+                const response = await fetch("https://api.anthropic.com/v1/messages", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "claude-sonnet-4-20250514",
+                        max_tokens: 1000,
+                        messages: [{ role: "user", content: prompt }]
+                    })
+                });
+
+                const data = await response.json();
+                const text = data.content[0].text.replace(/```json|```/g, '').trim();
+                const result = JSON.parse(text);
+
+                document.getElementById('resultTitle').textContent = result.title;
+                document.getElementById('vibeDescription').textContent = result.vibe;
+
+                const songList = document.getElementById('songList');
+                songList.innerHTML = '';
+                result.songs.forEach((song, i) => {
+                    songList.innerHTML += `
+                        <li class="song-item">
+                            <span class="song-num">${i + 1}</span>
+                            <div class="song-info">
+                                <div class="song-title">${song.title}</div>
+                                <div class="song-artist">${song.artist}</div>
+                            </div>
+                        </li>`;
+                });
+
+                document.getElementById('resultCard').classList.add('visible');
+
+            } catch (err) {
+                document.getElementById('errorMsg').classList.add('visible');
+            } finally {
+                document.getElementById('loading').classList.remove('visible');
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+
+        function resetApp() {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            selectedMood = '';
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').textContent = 'Select a Mood to Get Started';
+            document.getElementById('resultCard').classList.remove('visible');
+            document.getElementById('energySlider').value = 5;
+            document.getElementById('energyValue').textContent = '5 / 10';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
