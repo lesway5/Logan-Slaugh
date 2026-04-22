@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Mood Finder - Logan Slaugh</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #f0f0f0;
+        }
+
+        .topnav {
+            background-color: #1a1a2e;
+            padding: 15px 30px;
+            display: flex;
+            gap: 25px;
+            border-bottom: 2px solid #e94560;
+        }
+
+        .topnav a {
+            color: #f0f0f0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .topnav a:hover { color: #e94560; }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 50px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.8rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaaaaa;
+            margin-bottom: 50px;
+            font-size: 1.1rem;
+        }
+
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .mood-btn {
+            background-color: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 16px;
+            padding: 25px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #f0f0f0;
+        }
+
+        .mood-btn:hover {
+            border-color: #e94560;
+            transform: translateY(-3px);
+            background-color: #2a1a1e;
+        }
+
+        .mood-btn.selected {
+            border-color: #e94560;
+            background-color: #e94560;
+            color: white;
+        }
+
+        .mood-emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+        .mood-label { font-size: 0.95rem; font-weight: 600; }
+
+        .energy-section { margin-bottom: 40px; }
+
+        .energy-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #e94560;
+        }
+
+        .energy-slider {
+            width: 100%;
+            accent-color: #e94560;
+            height: 6px;
+            cursor: pointer;
+        }
+
+        .energy-labels {
+            display: flex;
+            justify-content: space-between;
+            color: #aaaaaa;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .generate-btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-bottom: 40px;
+        }
+
+        .generate-btn:hover { background-color: #c73652; transform: translateY(-2px); }
+        .generate-btn:disabled { background-color: #555; cursor: not-allowed; transform: none; }
+
+        .result-card {
+            background-color: #1e1e1e;
+            border-radius: 16px;
+            padding: 35px;
+            border: 1px solid #333;
+            display: none;
+        }
+
+        .result-card.visible { display: block; }
+
+        .result-card h2 {
+            font-size: 1.5rem;
+            color: #e94560;
+            margin-bottom: 20px;
+            border-left: 4px solid #e94560;
+            padding-left: 12px;
+        }
+
+        .vibe-description {
+            background-color: #2a1a1e;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #e94560;
+            margin-bottom: 25px;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #dddddd;
+        }
+
+        .playlist-section { margin-bottom: 25px; }
+
+        .playlist-section h3 {
+            font-size: 1rem;
+            color: #aaaaaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .song-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+        .song-item {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid #e94560;
+        }
+
+        .song-num { color: #e94560; font-weight: 700; font-size: 0.9rem; min-width: 24px; }
+        .song-info { flex: 1; }
+        .song-title { font-weight: 600; font-size: 0.95rem; }
+        .song-artist { color: #aaaaaa; font-size: 0.85rem; margin-top: 2px; }
+
+        .try-again-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: transparent;
+            color: #e94560;
+            border: 2px solid #e94560;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .try-again-btn:hover { background-color: #e94560; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="topnav">
+        <a href="index.html">← Professional Site</a>
+        <a href="scratch.html">← Music Page</a>
+    </div>
+
+    <div class="container">
+        <h1>🎵 Music Mood Finder</h1>
+        <p class="subtitle">Tell me how you're feeling and I'll build you the perfect playlist</p>
+
+        <div class="mood-grid">
+            <div class="mood-btn" onclick="selectMood(this, 'happy')">
+                <span class="mood-emoji">😄</span>
+                <span class="mood-label">Happy</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'sad')">
+                <span class="mood-emoji">😢</span>
+                <span class="mood-label">Sad</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'hype')">
+                <span class="mood-emoji">🔥</span>
+                <span class="mood-label">Hype</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'chill')">
+                <span class="mood-emoji">😌</span>
+                <span class="mood-label">Chill</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'angry')">
+                <span class="mood-emoji">😤</span>
+                <span class="mood-label">Angry</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'focused')">
+                <span class="mood-emoji">🎯</span>
+                <span class="mood-label">Focused</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'romantic')">
+                <span class="mood-emoji">❤️</span>
+                <span class="mood-label">Romantic</span>
+            </div>
+            <div class="mood-btn" onclick="selectMood(this, 'nostalgic')">
+                <span class="mood-emoji">🌙</span>
+                <span class="mood-label">Nostalgic</span>
+            </div>
+        </div>
+
+        <div class="energy-section">
+            <h2>Energy Level</h2>
+            <input type="range" min="1" max="10" value="5" class="energy-slider" id="energySlider" oninput="updateEnergy(this.value)" />
+            <div class="energy-labels">
+                <span>Low Key 😴</span>
+                <span id="energyValue">5 / 10</span>
+                <span>Full Send 🚀</span>
+            </div>
+        </div>
+
+        <button class="generate-btn" id="generateBtn" onclick="generatePlaylist()" disabled>
+            Select a Mood to Get Started
+        </button>
+
+        <div class="result-card" id="resultCard">
+            <h2 id="resultTitle">Your Playlist</h2>
+            <div class="vibe-description" id="vibeDescription"></div>
+            <div class="playlist-section">
+                <h3>🎵 Songs for this Mood</h3>
+                <ul class="song-list" id="songList"></ul>
+            </div>
+            <button class="try-again-btn" onclick="resetApp()">Try a Different Mood</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedMood = '';
+
+        const playlists = {
+            happy: {
+                low: {
+                    title: "Sunshine Vibes ☀️",
+                    vibe: "You're in a happy, laid-back place. These feel-good songs match your bright energy without being too over the top.",
+                    songs: [
+                        { title: "Good as Hell", artist: "Lizzo" },
+                        { title: "Happy", artist: "Pharrell Williams" },
+                        { title: "Can't Stop the Feeling", artist: "Justin Timberlake" },
+                        { title: "Levitating", artist: "Dua Lipa" },
+                        { title: "Shake It Off", artist: "Taylor Swift" },
+                        { title: "Good Days", artist: "SZA" }
+                    ]
+                },
+                high: {
+                    title: "Pure Joy 🎉",
+                    vibe: "You're on top of the world and the energy is electric! These high-energy happy bangers will keep the good times rolling.",
+                    songs: [
+                        { title: "Blinding Lights", artist: "The Weeknd" },
+                        { title: "ENERGY", artist: "Drake ft. Beyoncé" },
+                        { title: "HUMBLE.", artist: "Kendrick Lamar" },
+                        { title: "Don't Start Now", artist: "Dua Lipa" },
+                        { title: "Uptown Funk", artist: "Mark Ronson ft. Bruno Mars" },
+                        { title: "Starboy", artist: "The Weeknd" }
+                    ]
+                }
+            },
+            sad: {
+                low: {
+                    title: "Feeling It All 🌧️",
+                    vibe: "Sometimes you just need to sit with your feelings. These soft, emotional songs give you space to feel everything without judgment.",
+                    songs: [
+                        { title: "Ivy", artist: "Frank Ocean" },
+                        { title: "Let It Be Me", artist: "Ray LaMontagne" },
+                        { title: "The Night Will Always Win", artist: "Manchester Orchestra" },
+                        { title: "Skinny Love", artist: "Bon Iver" },
+                        { title: "Liability", artist: "Lorde" },
+                        { title: "Self Control", artist: "Frank Ocean" }
+                    ]
+                },
+                high: {
+                    title: "Hurt So Good 💔",
+                    vibe: "You're sad but there's a fire behind it. These emotionally intense songs match that bittersweet feeling perfectly.",
+                    songs: [
+                        { title: "To Be Alone", artist: "Hozier" },
+                        { title: "Motion Sickness", artist: "Phoebe Bridgers" },
+                        { title: "Driver's License", artist: "Olivia Rodrigo" },
+                        { title: "Someone Like You", artist: "Adele" },
+                        { title: "Exile", artist: "Taylor Swift ft. Bon Iver" },
+                        { title: "Heather", artist: "Conan Gray" }
+                    ]
+                }
+            },
+            hype: {
+                low: {
+                    title: "Warming Up 💪",
+                    vibe: "You're getting in the zone. These tracks build energy gradually and get you locked in before you go full send.",
+                    songs: [
+                        { title: "DNA.", artist: "Kendrick Lamar" },
+                        { title: "Power", artist: "Kanye West" },
+                        { title: "Goosebumps", artist: "Travis Scott" },
+                        { title: "Way 2 Sexy", artist: "Drake" },
+                        { title: "Sicko Mode", artist: "Travis Scott" },
+                        { title: "God's Plan", artist: "Drake" }
+                    ]
+                },
+                high: {
+                    title: "FULL SEND 🚀🔥",
+                    vibe: "Zero to a hundred real quick. These are the hardest hitting tracks to get you absolutely hyped up.",
+                    songs: [
+                        { title: "SICKO MODE", artist: "Travis Scott" },
+                        { title: "HUMBLE.", artist: "Kendrick Lamar" },
+                        { title: "Jumpman", artist: "Drake & Future" },
+                        { title: "Bad and Boujee", artist: "Migos" },
+                        { title: "All Falls Down", artist: "Kanye West" },
+                        { title: "Mask Off", artist: "Future" }
+                    ]
+                }
+            },
+            chill: {
+                low: {
+                    title: "Cloud Nine 🌥️",
+                    vibe: "Ultra mellow mode activated. These slow, smooth tracks are perfect for doing absolutely nothing and loving it.",
+                    songs: [
+                        { title: "Nights", artist: "Frank Ocean" },
+                        { title: "Slow Burn", artist: "Kacey Musgraves" },
+                        { title: "Sunday Morning", artist: "Maroon 5" },
+                        { title: "Lost in the Light", artist: "Bahamas" },
+                        { title: "Pink + White", artist: "Frank Ocean" },
+                        { title: "Retrograde", artist: "James Blake" }
+                    ]
+                },
+                high: {
+                    title: "Smooth Operator 😎",
+                    vibe: "Chill but with a groove. You're relaxed but not sleepy — these tracks keep things smooth and flowing.",
+                    songs: [
+                        { title: "Location", artist: "Khalid" },
+                        { title: "Redbone", artist: "Childish Gambino" },
+                        { title: "Do I Wanna Know?", artist: "Arctic Monkeys" },
+                        { title: "Electric Feel", artist: "MGMT" },
+                        { title: "Kiss It Better", artist: "Rihanna" },
+                        { title: "Feels", artist: "Calvin Harris ft. Pharrell" }
+                    ]
+                }
+            },
+            angry: {
+                low: {
+                    title: "Simmering 😒",
+                    vibe: "You're not exploding but there's definitely something brewing. These tracks match that low, intense energy.",
+                    songs: [
+                        { title: "u", artist: "Kendrick Lamar" },
+                        { title: "Creep", artist: "Radiohead" },
+                        { title: "Fake Plastic Trees", artist: "Radiohead" },
+                        { title: "My Chemical Romance", artist: "Welcome to the Black Parade" },
+                        { title: "Semi-Charmed Life", artist: "Third Eye Blind" },
+                        { title: "Issues", artist: "Julia Michaels" }
+                    ]
+                },
+                high: {
+                    title: "Let It Out 💥",
+                    vibe: "You need to release that energy RIGHT NOW. These aggressive, hard-hitting tracks are exactly what you need.",
+                    songs: [
+                        { title: "Killing in the Name", artist: "Rage Against the Machine" },
+                        { title: "Break Stuff", artist: "Limp Bizkit" },
+                        { title: "Numb", artist: "Linkin Park" },
+                        { title: "In the End", artist: "Linkin Park" },
+                        { title: "Bodies", artist: "Drowning Pool" },
+                        { title: "Given Up", artist: "Linkin Park" }
+                    ]
+                }
+            },
+            focused: {
+                low: {
+                    title: "Deep Work Mode 📚",
+                    vibe: "You need to lock in and get things done. These calm, instrumental-friendly tracks keep you in the zone without distraction.",
+                    songs: [
+                        { title: "Intro", artist: "The xx" },
+                        { title: "Experience", artist: "Ludovico Einaudi" },
+                        { title: "Comptine d'un autre été", artist: "Yann Tiersen" },
+                        { title: "Crystals", artist: "Of Monsters and Men" },
+                        { title: "Re: Stacks", artist: "Bon Iver" },
+                        { title: "Holocene", artist: "Bon Iver" }
+                    ]
+                },
+                high: {
+                    title: "Beast Mode 🎯",
+                    vibe: "You're focused AND energized — a dangerous combo. These tracks keep your brain locked in while your energy stays high.",
+                    songs: [
+                        { title: "Stronger", artist: "Kanye West" },
+                        { title: "Till I Collapse", artist: "Eminem" },
+                        { title: "Lose Yourself", artist: "Eminem" },
+                        { title: "Work Hard, Play Hard", artist: "Wiz Khalifa" },
+                        { title: "Started From the Bottom", artist: "Drake" },
+                        { title: "All I Do Is Win", artist: "DJ Khaled" }
+                    ]
+                }
+            },
+            romantic: {
+                low: {
+                    title: "Slow Dance 💕",
+                    vibe: "Soft, intimate, and warm. These gentle love songs are perfect for a quiet evening with someone special.",
+                    songs: [
+                        { title: "At Last", artist: "Etta James" },
+                        { title: "Make You Feel My Love", artist: "Adele" },
+                        { title: "Thinking Out Loud", artist: "Ed Sheeran" },
+                        { title: "All of Me", artist: "John Legend" },
+                        { title: "Die For You", artist: "The Weeknd" },
+                        { title: "Best Part", artist: "Daniel Caesar ft. H.E.R." }
+                    ]
+                },
+                high: {
+                    title: "Head Over Heels 🌹",
+                    vibe: "You're full of love and you want the world to know it. These passionate, upbeat love songs match your heart-on-fire energy.",
+                    songs: [
+                        { title: "Adorn", artist: "Miguel" },
+                        { title: "Stay With Me", artist: "Sam Smith" },
+                        { title: "Crazy in Love", artist: "Beyoncé" },
+                        { title: "Can't Help Falling in Love", artist: "Elvis Presley" },
+                        { title: "I Will Always Love You", artist: "Whitney Houston" },
+                        { title: "Perfect", artist: "Ed Sheeran" }
+                    ]
+                }
+            },
+            nostalgic: {
+                low: {
+                    title: "Memory Lane 🌙",
+                    vibe: "Drifting through memories. These soft, timeless songs feel like flipping through old photos on a quiet night.",
+                    songs: [
+                        { title: "The Night We Met", artist: "Lord Huron" },
+                        { title: "Youth", artist: "Daughter" },
+                        { title: "1979", artist: "The Smashing Pumpkins" },
+                        { title: "Fast Car", artist: "Tracy Chapman" },
+                        { title: "Landslide", artist: "Fleetwood Mac" },
+                        { title: "Dreams", artist: "Fleetwood Mac" }
+                    ]
+                },
+                high: {
+                    title: "Throwback Bangers 🎶",
+                    vibe: "You want to go back in time AND have a good time doing it. These nostalgic hits bring all the feels AND the energy.",
+                    songs: [
+                        { title: "Mr. Brightside", artist: "The Killers" },
+                        { title: "Bohemian Rhapsody", artist: "Queen" },
+                        { title: "Don't Stop Believin'", artist: "Journey" },
+                        { title: "Teenage Dream", artist: "Katy Perry" },
+                        { title: "Take On Me", artist: "a-ha" },
+                        { title: "Africa", artist: "Toto" }
+                    ]
+                }
+            }
+        };
+
+        function selectMood(el, mood) {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedMood = mood;
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = false;
+            const label = el.querySelector('.mood-label').textContent;
+            btn.textContent = `Build My ${label} Playlist 🎵`;
+        }
+
+        function updateEnergy(val) {
+            document.getElementById('energyValue').textContent = `${val} / 10`;
+        }
+
+        function generatePlaylist() {
+            if (!selectedMood) return;
+
+            const energy = parseInt(document.getElementById('energySlider').value);
+            const tier = energy <= 5 ? 'low' : 'high';
+            const data = playlists[selectedMood][tier];
+
+            // Shuffle songs so it feels fresh each time
+            const shuffled = [...data.songs].sort(() => Math.random() - 0.5);
+
+            document.getElementById('resultTitle').textContent = data.title;
+            document.getElementById('vibeDescription').textContent = data.vibe;
+
+            const songList = document.getElementById('songList');
+            songList.innerHTML = '';
+            shuffled.forEach((song, i) => {
+                songList.innerHTML += `
+                    <li class="song-item">
+                        <span class="song-num">${i + 1}</span>
+                        <div class="song-info">
+                            <div class="song-title">${song.title}</div>
+                            <div class="song-artist">${song.artist}</div>
+                        </div>
+                    </li>`;
+            });
+
+            document.getElementById('resultCard').classList.add('visible');
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetApp() {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+            selectedMood = '';
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').textContent = 'Select a Mood to Get Started';
+            document.getElementById('resultCard').classList.remove('visible');
+            document.getElementById('energySlider').value = 5;
+            document.getElementById('energyValue').textContent = '5 / 10';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
